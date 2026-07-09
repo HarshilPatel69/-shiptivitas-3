@@ -83,6 +83,11 @@
   .idea dl{margin:2px 0 0;display:flex;flex-direction:column;gap:9px}
   .idea dt{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .idea dd{margin:2px 0 0;font-size:14px;color:var(--ink)}
+  .sqlgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  @media(max-width:680px){.sqlgrid{grid-template-columns:1fr}}
+  .sqlblock h4{margin:0 0 8px;font-size:13px;font-weight:650;color:var(--ink-2)}
+  pre.sql{margin:0;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;overflow-x:auto}
+  pre.sql code{font-family:ui-monospace,"Cascadia Code","Segoe UI Mono",Menlo,Consolas,monospace;font-size:12px;line-height:1.6;color:var(--ink);white-space:pre;tab-size:2}
   footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);padding-top:16px}
   footer code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:12px}
 </style></head><body><div class="rep"><div class="wrap">
@@ -137,6 +142,42 @@
       <div class="farrow">→ 62% →</div>
       <div class="fstage"><div class="fn">103</div><div class="fl">cards completed (in-progress → complete)</div></div>
       <div class="farrow"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="eyebrow">Acceptance criterion 3</div>
+    <h2>The SQL queries</h2>
+    <p class="sub">Run against <code style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px">shiptivity.db</code>. Both blocks are also in <code style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px">answer.sql</code>.</p>
+    <div class="sqlgrid">
+      <div class="sqlblock"><h4>Part 1 — Daily active users, before &amp; after</h4><pre class="sql"><code>-- PART 1a  Daily Active Users time-series (drives the DAU graph)
+SELECT DATE(login_timestamp,'unixepoch') AS day,
+       COUNT(DISTINCT user_id)           AS active_users
+FROM   login_history
+GROUP  BY day
+ORDER  BY day;
+
+-- PART 1b  Average DAU before vs after the 2018-06-02 release
+SELECT period, ROUND(AVG(active_users),2) AS avg_daily_active_users
+FROM (
+  SELECT DATE(login_timestamp,'unixepoch') AS day,
+         CASE WHEN DATE(login_timestamp,'unixepoch') &lt; '2018-06-02'
+              THEN 'before' ELSE 'after' END AS period,
+         COUNT(DISTINCT user_id)             AS active_users
+  FROM login_history
+  GROUP BY day
+)
+GROUP BY period;</code></pre></div>
+      <div class="sqlblock"><h4>Part 2 — Status changes by card</h4><pre class="sql"><code>-- PART 2  Number of status changes by card
+-- (a real status change = oldStatus changed; exclude creation rows where
+--  oldStatus IS NULL)
+SELECT h.cardID, c.name, COUNT(*) AS status_changes
+FROM   card_change_history h
+JOIN   card c ON c.id = h.cardID
+WHERE  h.oldStatus IS NOT NULL
+  AND  h.oldStatus &lt;&gt; h.newStatus
+GROUP  BY h.cardID, c.name
+ORDER  BY status_changes DESC;</code></pre></div>
     </div>
   </section>
 
