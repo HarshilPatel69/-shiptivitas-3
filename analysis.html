@@ -1,0 +1,180 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Shiptivitas — Kanban launch analytics</title><style>
+  .rep *{box-sizing:border-box}
+  .rep{
+    --plane:#f4f6f9; --surface:#ffffff; --surface-2:#fbfcfe;
+    --ink:#111827; --ink-2:#4b5563; --muted:#8b95a3;
+    --accent:#2a78d6; --accent-2:#256abf; --accent-soft:rgba(42,120,214,.10);
+    --good:#0a8a0a; --grid:#e7eaf0; --axis:#c7cdd6; --before:#9aa6b6;
+    --border:rgba(15,23,42,.10); --shadow:0 1px 2px rgba(15,23,42,.05),0 6px 20px rgba(15,23,42,.05);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink);
+    background:var(--plane); line-height:1.55; -webkit-font-smoothing:antialiased;
+    padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px);
+  }
+  @media (prefers-color-scheme:dark){ .rep{
+    --plane:#0b0e13; --surface:#141a21; --surface-2:#19212a;
+    --ink:#f2f5f8; --ink-2:#aab4c1; --muted:#7f8a98;
+    --accent:#3f8ae8; --accent-2:#5b9def; --accent-soft:rgba(63,138,232,.16);
+    --good:#3fd23f; --grid:#232b35; --axis:#39424e; --before:#5c6774;
+    --border:rgba(255,255,255,.10); --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 26px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"] .rep{
+    --plane:#0b0e13; --surface:#141a21; --surface-2:#19212a;
+    --ink:#f2f5f8; --ink-2:#aab4c1; --muted:#7f8a98;
+    --accent:#3f8ae8; --accent-2:#5b9def; --accent-soft:rgba(63,138,232,.16);
+    --good:#3fd23f; --grid:#232b35; --axis:#39424e; --before:#5c6774;
+    --border:rgba(255,255,255,.10); --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 26px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"] .rep{
+    --plane:#f4f6f9; --surface:#ffffff; --surface-2:#fbfcfe;
+    --ink:#111827; --ink-2:#4b5563; --muted:#8b95a3;
+    --accent:#2a78d6; --accent-2:#256abf; --accent-soft:rgba(42,120,214,.10);
+    --good:#0a8a0a; --grid:#e7eaf0; --axis:#c7cdd6; --before:#9aa6b6;
+    --border:rgba(15,23,42,.10); --shadow:0 1px 2px rgba(15,23,42,.05),0 6px 20px rgba(15,23,42,.05);
+  }
+  .wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  header .eyebrow{margin-bottom:10px}
+  h1{font-size:clamp(26px,4.2vw,40px);line-height:1.12;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+  .lede{margin:12px 0 0;color:var(--ink-2);font-size:clamp(15px,1.6vw,17px);max-width:62ch}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .k-label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  .kpi .k-val{font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+  .kpi .k-sub{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+  .kpi.hero .k-val{color:var(--good)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:clamp(16px,2.4vw,24px);box-shadow:var(--shadow)}
+  .card h2{margin:0;font-size:19px;font-weight:650;letter-spacing:-.01em}
+  .card .sub{margin:5px 0 16px;color:var(--ink-2);font-size:14px}
+  .chart{width:100%;height:auto;display:block;overflow:visible}
+  .chart .grid{stroke:var(--grid);stroke-width:1}
+  .chart .axis{stroke:var(--axis);stroke-width:1}
+  .chart .ytick,.chart .xtick{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+  .chart .series{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+  .chart .fill{fill:var(--accent-soft);stroke:none}
+  .chart .dot{fill:var(--surface);stroke:var(--accent);stroke-width:2}
+  .chart .preLaunch{fill:var(--before);opacity:.08}
+  .chart .refBefore{stroke:var(--before);stroke-width:1.5;stroke-dasharray:4 4}
+  .chart .refAfter{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 4;opacity:.8}
+  .chart .refLbl{font-size:11px;font-weight:600}
+  .chart .refLbl.before{fill:var(--before)} .chart .refLbl.after{fill:var(--accent-2)}
+  .chart .launch{stroke:var(--ink);stroke-width:1.4;opacity:.55}
+  .chart .launchLbl{fill:var(--ink-2);font-size:11px;font-weight:600}
+  .chart .bar{fill:var(--accent);opacity:.45}
+  .chart .bar.hot{opacity:1}
+  .chart .bar.cool{fill:var(--before);opacity:.6}
+  .chart .barval{fill:var(--ink);font-size:12px;font-weight:650;font-variant-numeric:tabular-nums}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:12.5px;color:var(--ink-2)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .funnel{display:grid;grid-template-columns:1fr auto 1fr auto;gap:12px;align-items:center;margin-top:18px}
+  @media(max-width:560px){.funnel{grid-template-columns:1fr}}
+  .fstage{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+  .fstage .fn{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+  .fstage .fl{font-size:12.5px;color:var(--ink-2)}
+  .farrow{color:var(--muted);font-size:13px;text-align:center;font-weight:600}
+  .ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .idea{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+  .idea-head{display:flex;align-items:center;gap:10px}
+  .idea .idx{width:26px;height:26px;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .idea .tag{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-2)}
+  .idea h3{margin:0;font-size:18px;font-weight:650;letter-spacing:-.01em}
+  .idea .grounded{font-size:13px;color:var(--ink-2);background:var(--accent-soft);border-radius:10px;padding:10px 12px;margin:0}
+  .idea .gk{display:block;font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-2);margin-bottom:3px}
+  .idea dl{margin:2px 0 0;display:flex;flex-direction:column;gap:9px}
+  .idea dt{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .idea dd{margin:2px 0 0;font-size:14px;color:var(--ink)}
+  footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);padding-top:16px}
+  footer code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:12px}
+</style></head><body><div class="rep"><div class="wrap">
+  <header>
+    <div class="eyebrow">Shiptivitas · Growth analytics</div>
+    <h1>The Kanban board tripled daily active users</h1>
+    <p class="lede">On <strong>2 June 2018</strong> we shipped the Kanban board. In the eleven months since, average daily active users rose from <strong>3.63</strong> to <strong>11.79</strong> — a <strong>3.25&times;</strong> lift. Here's the evidence, how cards actually move, and three data-backed bets to push DAU further.</p>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi"><div class="k-label">Avg DAU · before</div><div class="k-val">3.63</div><div class="k-sub">3 Feb – 1 Jun 2018</div></div>
+    <div class="kpi"><div class="k-label">Avg DAU · after</div><div class="k-val">11.79</div><div class="k-sub">2 Jun 2018 – 1 Feb 2019</div></div>
+    <div class="kpi hero"><div class="k-label">Change</div><div class="k-val">+225%</div><div class="k-sub">3.25&times; more active users</div></div>
+    <div class="kpi"><div class="k-label">Status changes logged</div><div class="k-val">286</div><div class="k-sub">across 162 of 200 cards</div></div>
+  </section>
+
+  <section class="card">
+    <div class="eyebrow">Acceptance criterion 1</div>
+    <h2>Daily active users, before &amp; after the feature</h2>
+    <p class="sub">Monthly average of daily active users (distinct users who logged in). The shaded band is the pre-launch period; dashed lines mark each period's average.</p>
+    <svg viewBox="0 0 720 300" class="chart" role="img" aria-label="Monthly average daily active users, Feb 2018 to Feb 2019">
+  <rect x="46" y="18" width="656" height="240" class="preLaunch" style="width:191.3px"/>
+  <line x1="46" y1="258.0" x2="702" y2="258.0" class="grid"/><text x="38" y="261.5" class="ytick" text-anchor="end">0</text><line x1="46" y1="223.7" x2="702" y2="223.7" class="grid"/><text x="38" y="227.2" class="ytick" text-anchor="end">2</text><line x1="46" y1="189.4" x2="702" y2="189.4" class="grid"/><text x="38" y="192.9" class="ytick" text-anchor="end">4</text><line x1="46" y1="155.1" x2="702" y2="155.1" class="grid"/><text x="38" y="158.6" class="ytick" text-anchor="end">6</text><line x1="46" y1="120.9" x2="702" y2="120.9" class="grid"/><text x="38" y="124.4" class="ytick" text-anchor="end">8</text><line x1="46" y1="86.6" x2="702" y2="86.6" class="grid"/><text x="38" y="90.1" class="ytick" text-anchor="end">10</text><line x1="46" y1="52.3" x2="702" y2="52.3" class="grid"/><text x="38" y="55.8" class="ytick" text-anchor="end">12</text><line x1="46" y1="18.0" x2="702" y2="18.0" class="grid"/><text x="38" y="21.5" class="ytick" text-anchor="end">14</text>
+  <line x1="46" y1="195.8" x2="237.3" y2="195.8" class="refBefore"/>
+  <line x1="237.3" y1="55.9" x2="702" y2="55.9" class="refAfter"/>
+  <text x="52" y="188.8" class="refLbl before">avg before · 3.63</text>
+  <text x="696" y="46.9" class="refLbl after" text-anchor="end">avg after · 11.79</text>
+  <polygon points="46.0,258.0 46.0,231.3 100.7,198.9 155.3,206.6 210.0,164.1 264.7,53.5 319.3,36.9 374.0,38.4 428.7,52.3 483.3,77.7 538.0,42.0 592.7,64.5 647.3,82.6 702.0,86.6 702.0,258.0" class="fill"/>
+  <polyline points="46.0,231.3 100.7,198.9 155.3,206.6 210.0,164.1 264.7,53.5 319.3,36.9 374.0,38.4 428.7,52.3 483.3,77.7 538.0,42.0 592.7,64.5 647.3,82.6 702.0,86.6" class="series"/>
+  <circle cx="46.0" cy="231.3" r="3" class="dot"/><circle cx="100.7" cy="198.9" r="3" class="dot"/><circle cx="155.3" cy="206.6" r="3" class="dot"/><circle cx="210.0" cy="164.1" r="3" class="dot"/><circle cx="264.7" cy="53.5" r="3" class="dot"/><circle cx="319.3" cy="36.9" r="3" class="dot"/><circle cx="374.0" cy="38.4" r="3" class="dot"/><circle cx="428.7" cy="52.3" r="3" class="dot"/><circle cx="483.3" cy="77.7" r="3" class="dot"/><circle cx="538.0" cy="42.0" r="3" class="dot"/><circle cx="592.7" cy="64.5" r="3" class="dot"/><circle cx="647.3" cy="82.6" r="3" class="dot"/><circle cx="702.0" cy="86.6" r="3" class="dot"/>
+  <line x1="237.3" y1="18" x2="237.3" y2="258" class="launch"/>
+  <text x="244.3" y="31" class="launchLbl">Kanban launch · 2 Jun 2018</text>
+  <text x="46.0" y="276" class="xtick" text-anchor="middle">18-02</text><text x="155.3" y="276" class="xtick" text-anchor="middle">18-04</text><text x="264.7" y="276" class="xtick" text-anchor="middle">18-06</text><text x="374.0" y="276" class="xtick" text-anchor="middle">18-08</text><text x="483.3" y="276" class="xtick" text-anchor="middle">18-10</text><text x="592.7" y="276" class="xtick" text-anchor="middle">18-12</text><text x="702.0" y="276" class="xtick" text-anchor="middle">19-02</text>
+</svg>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--accent)"></span> Monthly avg DAU</span>
+      <span><span class="swatch" style="background:var(--before)"></span> Pre-launch avg (3.63)</span>
+      <span><span class="swatch" style="background:var(--accent)"></span> Post-launch avg (11.79)</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="eyebrow">Acceptance criterion 2</div>
+    <h2>Status changes by card</h2>
+    <p class="sub">How many of the 200 cards had 0–5 status changes. Most cards make exactly two moves — the backlog → in-progress → complete happy path — while 38 never move at all.</p>
+    <svg viewBox="0 0 720 300" class="chart" role="img" aria-label="Number of cards by how many status changes they had">
+  <line x1="46" y1="254.0" x2="702" y2="254.0" class="grid"/><text x="38" y="257.5" class="ytick" text-anchor="end">0</text><line x1="46" y1="195.0" x2="702" y2="195.0" class="grid"/><text x="38" y="198.5" class="ytick" text-anchor="end">25</text><line x1="46" y1="136.0" x2="702" y2="136.0" class="grid"/><text x="38" y="139.5" class="ytick" text-anchor="end">50</text><line x1="46" y1="77.0" x2="702" y2="77.0" class="grid"/><text x="38" y="80.5" class="ytick" text-anchor="end">75</text><line x1="46" y1="18.0" x2="702" y2="18.0" class="grid"/><text x="38" y="21.5" class="ytick" text-anchor="end">100</text><rect x="69.0" y="164.3" width="63.4" height="89.7" rx="4" class="bar cool"/><text x="100.7" y="157.3" class="barval" text-anchor="middle">38</text><text x="100.7" y="272" class="xtick" text-anchor="middle">0 changes</text><rect x="178.3" y="128.9" width="63.4" height="125.1" rx="4" class="bar"/><text x="210.0" y="121.9" class="barval" text-anchor="middle">53</text><text x="210.0" y="272" class="xtick" text-anchor="middle">1 change</text><rect x="287.6" y="18.0" width="63.4" height="236.0" rx="4" class="bar hot"/><text x="319.3" y="11.0" class="barval" text-anchor="middle">100</text><text x="319.3" y="272" class="xtick" text-anchor="middle">2 changes</text><rect x="397.0" y="244.6" width="63.4" height="9.4" rx="4" class="bar"/><text x="428.7" y="237.6" class="barval" text-anchor="middle">4</text><text x="428.7" y="272" class="xtick" text-anchor="middle">3 changes</text><rect x="506.3" y="244.6" width="63.4" height="9.4" rx="4" class="bar"/><text x="538.0" y="237.6" class="barval" text-anchor="middle">4</text><text x="538.0" y="272" class="xtick" text-anchor="middle">4 changes</text><rect x="615.6" y="251.6" width="63.4" height="2.4" rx="4" class="bar"/><text x="647.3" y="244.6" class="barval" text-anchor="middle">1</text><text x="647.3" y="272" class="xtick" text-anchor="middle">5 changes</text>
+  <line x1="46" y1="254" x2="702" y2="254" class="axis"/>
+</svg>
+    <div class="funnel">
+      <div class="fstage"><div class="fn">167</div><div class="fl">cards started (backlog → in-progress)</div></div>
+      <div class="farrow">→ 62% →</div>
+      <div class="fstage"><div class="fn">103</div><div class="fl">cards completed (in-progress → complete)</div></div>
+      <div class="farrow"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Acceptance criterion 4</div>
+    <h2 style="margin:8px 0 2px;font-size:22px;letter-spacing:-.02em">Three bets to move DAU</h2>
+    <p class="sub" style="margin:0 0 16px;color:var(--ink-2)">Each is grounded in a number above and framed as hypothesis → expected impact → feature.</p>
+    <div class="ideas"><article class="idea">
+      <div class="idea-head"><span class="idx">1</span><span class="tag">Activation</span></div>
+      <h3>Stuck-card nudges</h3>
+      <p class="grounded"><span class="gk">In the data</span>38 of 200 cards (19%) never left the backlog, and the flow leaks from 167 cards started to 103 completed.</p>
+      <dl>
+        <dt>Hypothesis</dt><dd>Cards that sit untouched in the backlog are forgotten, not rejected. A timely nudge that resurfaces them will pull the owner back into the app to act.</dd>
+        <dt>Expected impact</dt><dd>A measurable drop in never-moved cards and an estimated <b>+10–15% DAU</b>, since each nudge is a reason to open the app that day.</dd>
+        <dt>The feature</dt><dd>A weekly &ldquo;Stale cards&rdquo; email plus an in-app banner listing cards untouched for 7+ days, each with one-tap <i>move</i> or <i>archive</i>.</dd>
+      </dl>
+    </article><article class="idea">
+      <div class="idea-head"><span class="idx">2</span><span class="tag">Retention</span></div>
+      <h3>Completion streaks</h3>
+      <p class="grounded"><span class="gk">In the data</span>DAU peaked at 12.9 in Jul 2018 then drifted to 11.79 by Feb 2019 — the post-launch novelty is fading.</p>
+      <dl>
+        <dt>Hypothesis</dt><dd>Users lose the daily habit once the newness wears off. A lightweight goal tied to the app's core value moment — moving a card to Complete — will rebuild the return loop.</dd>
+        <dt>Expected impact</dt><dd>A flatter, slower DAU decline and higher week-over-week return; target <b>+8–12% retained DAU</b>.</dd>
+        <dt>The feature</dt><dd>A &ldquo;cards completed this week&rdquo; goal and streak counter in the board header, with a gentle reminder when a live streak is about to lapse.</dd>
+      </dl>
+    </article><article class="idea">
+      <div class="idea-head"><span class="idx">3</span><span class="tag">Acquisition loop</span></div>
+      <h3>Manager completion alerts</h3>
+      <p class="grounded"><span class="gk">In the data</span>Completing a card (in-progress → complete happened 103×) is the value moment managers care about most.</p>
+      <dl>
+        <dt>Hypothesis</dt><dd>Emailing a manager the instant their team completes a key card pulls a brand-new, high-value user segment into the app and speeds the whole board along.</dd>
+        <dt>Expected impact</dt><dd>A new returning-user segment (managers) converting from email to login; target <b>+15% DAU</b> plus faster card throughput.</dd>
+        <dt>The feature</dt><dd>Per-card &ldquo;notify on complete&rdquo;: when a card reaches Complete, email the manager a summary with a link that deep-opens the board.</dd>
+      </dl>
+    </article></div>
+  </section>
+
+  <footer>
+    Source: <code>shiptivity.db</code> · queries in <code>answer.sql</code> (DAU time-series &amp; before/after average; status-changes-per-card). Timestamps are unix epoch; the &ldquo;before&rdquo; cut is <code>&lt; 2018-06-02</code>.
+  </footer>
+</div></div></body></html>
